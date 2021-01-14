@@ -31,7 +31,6 @@
  * https://gist.github.com/crearo/8c71729ed58c4c134cac44db74ea1754
  * https://stackoverflow.com/questions/34213636/add-clockoverlay-in-pipeline-correct-use-of-capsfilter
  * https://fossies.org/linux/gstreamer/tests/examples/controller/absolute-example.c
- * 
  * https://github.com/on-three/video-text-relay
  * 
  */
@@ -44,7 +43,7 @@
 int
 main (int argc, char *argv[])
 {
-	GstElement *pipeline, *testsource, *source, *sink, *filter,*csp,*encoder,*mux,*payload, *textlabel_left,*textlabel_right, *timelabel, *clocklabel;
+	GstElement *pipeline, *testsource, *source, *sink, *filter,*videoconverter,*encoder,*mux,*payload, *textlabel_left,*textlabel_right, *timelabel, *clocklabel;
 	GstCaps *filtercaps;
 	GstBus *bus;
 	GstMessage *msg;
@@ -52,11 +51,11 @@ main (int argc, char *argv[])
 
 	gst_init (&argc, &argv);
 
+	/* Selectable source (test vs camera) */
 	testsource = gst_element_factory_make ("videotestsrc", "source"); 
-
 	source = gst_element_factory_make ("v4l2src", "source");
+	
 	GstElement *capsfilter = gst_element_factory_make("capsfilter", "camera_caps");
-
 	GstCaps *caps = gst_caps_from_string ("video/x-raw, width=640, height=480");
 	g_object_set (capsfilter, "caps", caps, NULL);
 	gst_caps_unref(caps);
@@ -85,7 +84,6 @@ main (int argc, char *argv[])
 	g_object_set (G_OBJECT ( textlabel_right ), "valignment", 2, NULL);
 	g_object_set (G_OBJECT ( textlabel_right ), "halignment", 2, NULL);
 	g_object_set (G_OBJECT ( textlabel_right ), "shaded-background", TRUE, NULL);
-	
 	g_object_set (G_OBJECT ( textlabel_right ), "font-desc", "Courier, 12", NULL);
 	 
 	timelabel = gst_element_factory_make ("timeoverlay", NULL);
@@ -94,7 +92,6 @@ main (int argc, char *argv[])
 	g_object_set (G_OBJECT ( timelabel ), "halignment", 2, NULL);
 	g_object_set (G_OBJECT ( timelabel ), "shaded-background", TRUE, NULL);
 	g_object_set (G_OBJECT ( timelabel ), "line-alignment", 0, NULL);
-	
 	g_object_set (G_OBJECT ( timelabel ), "font-desc", "Courier, 14", NULL);
 	
 	clocklabel = gst_element_factory_make ("clockoverlay", NULL);
@@ -105,12 +102,13 @@ main (int argc, char *argv[])
 	g_object_set (G_OBJECT ( clocklabel ), "line-alignment", 0, NULL);
 	g_object_set (G_OBJECT ( clocklabel ), "font-desc", "Sans, 14", NULL);
 	
-	 
-	csp = gst_element_factory_make ("videoconvert", NULL);
-	if (csp == NULL)
+	videoconverter = gst_element_factory_make ("videoconvert", NULL);
+	if (videoconverter == NULL)
 		g_error ("Could not create 'videoconvert' element");
  
 	encoder = gst_element_factory_make ("x264enc", NULL);
+	if (encoder == NULL)
+		g_error ("Could not create 'x264enc' element");
   
 	g_object_set(G_OBJECT(encoder), "bitrate", 512, NULL);
 	g_object_set(G_OBJECT(encoder), "pass", 5, NULL);
@@ -122,11 +120,16 @@ main (int argc, char *argv[])
 	g_object_set(G_OBJECT(encoder), "intra-refresh", TRUE, NULL);
    
 	mux = gst_element_factory_make ("mpegtsmux", NULL);
+	if (mux == NULL)
+		g_error ("Could not create mpegtsmux");
+	
 	payload = gst_element_factory_make ("rtpmp2tpay",NULL);
+	if (payload == NULL)
+		g_error ("Could not create rtpmp2tpay");
+	
 	sink = gst_element_factory_make ("multiudpsink", NULL);
 	if (sink == NULL)
 		g_error ("Could not create multiudpsink");
- 
 	g_object_set(G_OBJECT(sink), "clients", "0.0.0.0:5000,127.0.0.1:4999", NULL);
 	
 	pipeline = gst_pipeline_new ("test-pipeline");
@@ -145,9 +148,9 @@ main (int argc, char *argv[])
 	}
 
 	/* Build the pipeline */
-	gst_bin_add_many (GST_BIN (pipeline), source,capsfilter,textlabel_left,textlabel_right,timelabel,clocklabel,csp, encoder,mux,payload, sink, NULL);
+	gst_bin_add_many (GST_BIN (pipeline), source,capsfilter,textlabel_left,textlabel_right,timelabel,clocklabel,videoconverter, encoder,mux,payload, sink, NULL);
 
-	if ( gst_element_link_many (source,capsfilter,textlabel_left,textlabel_right,timelabel,clocklabel,csp, encoder,mux,payload,sink,NULL) != TRUE) {
+	if ( gst_element_link_many (source,capsfilter,textlabel_left,textlabel_right,timelabel,clocklabel,videoconverter, encoder,mux,payload,sink,NULL) != TRUE) {
 		g_printerr ("Elements could not be linked.\n");
 		gst_object_unref (pipeline);
 		return -1;
