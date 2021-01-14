@@ -1,4 +1,10 @@
 Videosend 
 
-https://www.gnu.org/software/automake/manual/html_node/Creating-amhello.html
+Program to get feed from camera, encode and send it to multiudpsink.
 
+Some text fields as example included.
+
+REF:
+
+https://www.gnu.org/software/automake/manual/html_node/Creating-amhello.html
+https://developer.gnome.org/anjuta-build-tutorial/stable/library-autotools.html.en
