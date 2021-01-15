@@ -40,6 +40,20 @@
 #include <string.h>
 #include <gst/gst.h>
 
+static char *rand_string(char *str, size_t size)
+{
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJK...";
+    if (size) {
+        --size;
+        for (size_t n = 0; n < size; n++) {
+            int key = rand() % (int) (sizeof charset - 1);
+            str[n] = charset[key];
+        }
+        str[size] = '\0';
+    }
+    return str;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -170,13 +184,37 @@ main (int argc, char *argv[])
 		return -1;
 	}
 
-char var_str[100];
-int num=0;
- for (int i = 0; i < 10; i++) {
-    snprintf (var_str, sizeof(var_str), "%d",num++);
-    g_object_set (textlabel_left, "text", var_str, NULL);
-    g_usleep(1000*1000);
-  }
+	// 
+	
+	/*
+	char var_str[100];
+	int num=0;
+	for (int i = 0; i < 10; i++) {
+		snprintf (var_str, sizeof(var_str), "%d",num++);
+		g_object_set (textlabel_right, "text", var_str, NULL);
+		g_usleep(1000*1000);
+	}*/
+  
+  	
+	for (int i = 0; i < 12000; i++) {
+		
+		double load[3];  
+		char loadbuf[100];
+		memset(loadbuf,0,100);
+		
+		/* System load
+		if (getloadavg(load, 3) != -1)
+		{  
+			sprintf(loadbuf, "%i: %f , %f , %f",i, load[0],load[1],load[2]);
+		}
+		*/
+		rand_string(loadbuf, 20);
+		
+		
+		g_object_set (textlabel_right, "text", loadbuf, NULL);
+		g_usleep(10000*1000);
+	}	
+	
 
 
 	/* Wait until error or EOS */
