@@ -53,6 +53,25 @@ static char *rand_string(char *str, size_t size)
     }
     return str;
 }
+#define MAXCHAR 1000
+static char readvitals(char *str)
+{
+	char input[MAXCHAR];
+	memset(input,0,MAXCHAR);
+	FILE *fp;
+	fp = fopen("/tmp/oxy", "r");
+
+	if (fp == NULL)
+	{
+	  perror("Error while opening the oxymeter file.\n");
+	  exit(EXIT_FAILURE);
+	}
+
+	while (fgets(input, MAXCHAR, fp) != NULL)
+        sprintf(str, "%s", input);
+
+	fclose(fp);
+}
 
 int
 main (int argc, char *argv[])
@@ -75,17 +94,11 @@ main (int argc, char *argv[])
 	g_object_set (capsfilter, "caps", caps, NULL);
 	gst_caps_unref(caps);
 	g_object_set (G_OBJECT ( source ), "device", "/dev/video0", NULL);
-	
-	/* https://developer.ridgerun.com/wiki/index.php?title=RidgeRun_gst-crypto_GStreamer_Plugin
-	GstElement *cryptoelement;
-	cryptoelement = gst_element_factory_make ("crypto", "crypto"); //crypto mode=enc
-	g_object_set (G_OBJECT ( cryptoelement ), "mode", "enc", NULL);
-	g_object_set (G_OBJECT ( cryptoelement ), "pass", "abc123", NULL);*/
-	
+
 	/* See: gstbasetextoverlay.h for positioning enums */
 	 
 	textlabel_left = gst_element_factory_make ("textoverlay", NULL);
-	g_object_set (G_OBJECT ( textlabel_left ), "text", "Security level: BLUE", NULL);
+	g_object_set (G_OBJECT ( textlabel_left ), "text", "Suojaustaso: SININEN", NULL);
 	g_object_set (G_OBJECT ( textlabel_left ), "valignment", 2, NULL);
 	g_object_set (G_OBJECT ( textlabel_left ), "halignment", 0, NULL);
 	g_object_set (G_OBJECT ( textlabel_left ), "shaded-background", TRUE, NULL);
@@ -104,7 +117,7 @@ main (int argc, char *argv[])
 	g_object_set (G_OBJECT ( textlabel_right ), "valignment", 2, NULL);
 	g_object_set (G_OBJECT ( textlabel_right ), "halignment", 2, NULL);
 	g_object_set (G_OBJECT ( textlabel_right ), "shaded-background", TRUE, NULL);
-	g_object_set (G_OBJECT ( textlabel_right ), "font-desc", "Courier, 12", NULL);
+	g_object_set (G_OBJECT ( textlabel_right ), "font-desc", "Courier, 20", NULL);
 	 
 	timelabel = gst_element_factory_make ("timeoverlay", NULL);
 	g_object_set (G_OBJECT ( timelabel ), "text", "Stream time:\n", NULL);
@@ -184,39 +197,18 @@ main (int argc, char *argv[])
 		return -1;
 	}
 
-	// 
-	
-	/*
-	char var_str[100];
-	int num=0;
-	for (int i = 0; i < 10; i++) {
-		snprintf (var_str, sizeof(var_str), "%d",num++);
-		g_object_set (textlabel_right, "text", var_str, NULL);
-		g_usleep(1000*1000);
-	}*/
-  
-  	
+	/* Update display text */
 	for (int i = 0; i < 12000; i++) {
-		
 		double load[3];  
-		char loadbuf[100];
-		memset(loadbuf,0,100);
-		
-		/* System load
-		if (getloadavg(load, 3) != -1)
-		{  
-			sprintf(loadbuf, "%i: %f , %f , %f",i, load[0],load[1],load[2]);
-		}
-		*/
-		rand_string(loadbuf, 20);
-		
-		
-		g_object_set (textlabel_right, "text", loadbuf, NULL);
-		g_usleep(10000*1000);
+		char dispbuf[100];
+		memset(dispbuf,0,100);
+		readvitals(dispbuf);
+		g_object_set (textlabel_right, "text", dispbuf, NULL);
+		g_usleep(1000*1000);
+		if ( i > 10000 ) 
+			i=0;
 	}	
 	
-
-
 	/* Wait until error or EOS */
 	bus = gst_element_get_bus (pipeline);
 	msg =
