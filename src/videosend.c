@@ -44,6 +44,7 @@ int
 main (int argc, char *argv[])
 {
 	GstElement *pipeline, *testsource, *source, *sink, *filter,*videoconverter,*encoder,*mux,*payload, *textlabel_left,*textlabel_right, *timelabel, *clocklabel;
+	
 	GstCaps *filtercaps;
 	GstBus *bus;
 	GstMessage *msg;
@@ -56,11 +57,16 @@ main (int argc, char *argv[])
 	source = gst_element_factory_make ("v4l2src", "source");
 	
 	GstElement *capsfilter = gst_element_factory_make("capsfilter", "camera_caps");
-	GstCaps *caps = gst_caps_from_string ("video/x-raw, width=640, height=480");
+	GstCaps *caps = gst_caps_from_string ("video/x-raw, width=640, height=480,framerate=15/1");
 	g_object_set (capsfilter, "caps", caps, NULL);
 	gst_caps_unref(caps);
-	
 	g_object_set (G_OBJECT ( source ), "device", "/dev/video0", NULL);
+	
+	/* https://developer.ridgerun.com/wiki/index.php?title=RidgeRun_gst-crypto_GStreamer_Plugin
+	GstElement *cryptoelement;
+	cryptoelement = gst_element_factory_make ("crypto", "crypto"); //crypto mode=enc
+	g_object_set (G_OBJECT ( cryptoelement ), "mode", "enc", NULL);
+	g_object_set (G_OBJECT ( cryptoelement ), "pass", "abc123", NULL);*/
 	
 	/* See: gstbasetextoverlay.h for positioning enums */
 	 
@@ -163,6 +169,15 @@ main (int argc, char *argv[])
 		gst_object_unref (pipeline);
 		return -1;
 	}
+
+char var_str[100];
+int num=0;
+ for (int i = 0; i < 10; i++) {
+    snprintf (var_str, sizeof(var_str), "%d",num++);
+    g_object_set (textlabel_left, "text", var_str, NULL);
+    g_usleep(1000*1000);
+  }
+
 
 	/* Wait until error or EOS */
 	bus = gst_element_get_bus (pipeline);
