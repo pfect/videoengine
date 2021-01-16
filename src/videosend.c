@@ -65,10 +65,15 @@ main (int argc, char *argv[])
 	int usetestsource=0;
 	char defaultvideodevice[]="/dev/video0";
 	char *videodevice=NULL;
+	char defaultidentity[]="[no id]";
+	char *identity=NULL;
+	char defaultlefttoptext[]="[no classification]";
+	char *lefttoptext=NULL;
+	
 	
 	int c, index;
 	opterr = 0;
-	while ((c = getopt (argc, argv, "td:h")) != -1)
+	while ((c = getopt (argc, argv, "td:hi:c:")) != -1)
 	switch (c)
 	  {
 	  case 't':
@@ -79,7 +84,15 @@ main (int argc, char *argv[])
 		break;
 	  case 'h':
 		fprintf(stderr,"Usage: -d [videodevice] \n       -t use test video source.\n");
+		fprintf(stderr,"       -i [identity]\n");
+		fprintf(stderr,"       -c [left top text]\n");
 		return 1;
+		break;
+	  case 'c':
+		lefttoptext = optarg;
+		break;
+      case 'i':
+		identity = optarg;
 		break;
 	  case '?':
 		if (optopt == 'd') {
@@ -101,6 +114,10 @@ main (int argc, char *argv[])
 	/* Use default video device if none is provided by argument*/
 	if (videodevice == NULL)
 		videodevice = defaultvideodevice;
+	if (identity == NULL)
+		identity = defaultidentity;
+	if (lefttoptext == NULL)
+		lefttoptext = defaultlefttoptext;
   	
 	/* Initialize gstreamer */
 	GstElement *pipeline, *source, *sink, *filter,*videoconverter,*encoder,*mux,*payload, *textlabel_left,*textlabel_right, *timelabel, *clocklabel;
@@ -129,7 +146,7 @@ main (int argc, char *argv[])
 	/* See: gstbasetextoverlay.h for positioning enums */
 	 
 	textlabel_left = gst_element_factory_make ("textoverlay", NULL);
-	g_object_set (G_OBJECT ( textlabel_left ), "text", "Suojaustaso: SININEN", NULL);
+	g_object_set (G_OBJECT ( textlabel_left ), "text", lefttoptext, NULL);
 	g_object_set (G_OBJECT ( textlabel_left ), "valignment", 2, NULL);
 	g_object_set (G_OBJECT ( textlabel_left ), "halignment", 0, NULL);
 	g_object_set (G_OBJECT ( textlabel_left ), "shaded-background", TRUE, NULL);
@@ -159,7 +176,7 @@ main (int argc, char *argv[])
 	g_object_set (G_OBJECT ( timelabel ), "font-desc", "Courier, 14", NULL);
 	
 	clocklabel = gst_element_factory_make ("clockoverlay", NULL);
-	g_object_set (G_OBJECT ( clocklabel ), "text", "ID:Helsinki\n", NULL);
+	g_object_set (G_OBJECT ( clocklabel ), "text", identity, NULL);
 	g_object_set (G_OBJECT ( clocklabel ), "valignment", 1, NULL);
 	g_object_set (G_OBJECT ( clocklabel ), "halignment", 0, NULL);
 	g_object_set (G_OBJECT ( clocklabel ), "shaded-background", TRUE, NULL);
