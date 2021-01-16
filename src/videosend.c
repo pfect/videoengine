@@ -41,13 +41,13 @@ static char *rand_string(char *str, size_t size)
     return str;
 }
 
+/* Take vitals from oximeter provided data */
 static char readvitals(char *str)
 {
 	char input[MAXCHAR];
 	memset(input,0,MAXCHAR);
 	FILE *fp;
 	fp = fopen("/tmp/oxy", "r");
-
 	if (fp == NULL)
 	{
 	  sprintf(str, "");
@@ -69,10 +69,9 @@ main (int argc, char *argv[])
 	char *identity=NULL;
 	char defaultlefttoptext[]="[no classification]";
 	char *lefttoptext=NULL;
-	
-	
 	int c, index;
 	opterr = 0;
+	
 	while ((c = getopt (argc, argv, "td:hi:c:")) != -1)
 	switch (c)
 	  {
@@ -111,7 +110,7 @@ main (int argc, char *argv[])
 		break;
 	  }
 
-	/* Use default video device if none is provided by argument*/
+	/* Use defaults if none is provided by argument*/
 	if (videodevice == NULL)
 		videodevice = defaultvideodevice;
 	if (identity == NULL)
@@ -144,6 +143,8 @@ main (int argc, char *argv[])
 	
 
 	/* See: gstbasetextoverlay.h for positioning enums */
+	
+	/* emboverlay logo="RidgeRun.png" logo-offsetv=250 logo-offseth=300 logo-transparency=0 logo-enable=true */
 	 
 	textlabel_left = gst_element_factory_make ("textoverlay", NULL);
 	g_object_set (G_OBJECT ( textlabel_left ), "text", lefttoptext, NULL);
@@ -152,28 +153,20 @@ main (int argc, char *argv[])
 	g_object_set (G_OBJECT ( textlabel_left ), "shaded-background", TRUE, NULL);
 	g_object_set (G_OBJECT ( textlabel_left ), "font-desc", "Sans, 14", NULL);
 	
-	double load[3];  
-	char loadbuf[100];
-	memset(loadbuf,0,100);
-	if (getloadavg(load, 3) != -1)
-	{  
-		sprintf(loadbuf, "%f , %f , %f", load[0],load[1],load[2]);
-	}
-	
 	textlabel_right = gst_element_factory_make ("textoverlay", NULL);
-	g_object_set (G_OBJECT ( textlabel_right ), "text", loadbuf, NULL);
+	g_object_set (G_OBJECT ( textlabel_right ), "text", "", NULL);
 	g_object_set (G_OBJECT ( textlabel_right ), "valignment", 2, NULL);
 	g_object_set (G_OBJECT ( textlabel_right ), "halignment", 2, NULL);
 	g_object_set (G_OBJECT ( textlabel_right ), "shaded-background", TRUE, NULL);
 	g_object_set (G_OBJECT ( textlabel_right ), "font-desc", "Courier, 20", NULL);
 	 
 	timelabel = gst_element_factory_make ("timeoverlay", NULL);
-	g_object_set (G_OBJECT ( timelabel ), "text", "Stream time:\n", NULL);
+	g_object_set (G_OBJECT ( timelabel ), "text", "", NULL);
 	g_object_set (G_OBJECT ( timelabel ), "valignment", 1, NULL);
 	g_object_set (G_OBJECT ( timelabel ), "halignment", 2, NULL);
 	g_object_set (G_OBJECT ( timelabel ), "shaded-background", TRUE, NULL);
 	g_object_set (G_OBJECT ( timelabel ), "line-alignment", 0, NULL);
-	g_object_set (G_OBJECT ( timelabel ), "font-desc", "Courier, 14", NULL);
+	g_object_set (G_OBJECT ( timelabel ), "font-desc", "Sans, 14", NULL);
 	
 	clocklabel = gst_element_factory_make ("clockoverlay", NULL);
 	g_object_set (G_OBJECT ( clocklabel ), "text", identity, NULL);
