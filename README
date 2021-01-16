@@ -2,9 +2,25 @@ Videosend
 
 Program to get feed from camera, encode and send it to multiudpsink.
 
-Some text fields as example included.
+
+
+
+Oximeter data
+
+Modified cms50 project writes oximeter data (SpO2 and bpm) to /tmp/oxy
+file where videoengine reads text to display.
+
+https://github.com/tobac/cms50ew
 
 REF:
 
-https://www.gnu.org/software/automake/manual/html_node/Creating-amhello.html
-https://developer.gnome.org/anjuta-build-tutorial/stable/library-autotools.html.en
+ * https://www.gnu.org/software/automake/manual/html_node/Creating-amhello.html
+ * https://developer.gnome.org/anjuta-build-tutorial/stable/library-autotools.html.en
+ * https://github.com/cuilf/gstreamer_example/blob/master/gst-caps-demo.c
+ * https://gstreamer.freedesktop.org/documentation/application-development/advanced/pipeline-manipulation.html?gi-language=c
+ * https://gist.github.com/beeender/d539734794606a38d4e3
+ * https://github.com/crearo/gstreamer-cookbook/blob/master/C/dynamic-recording.c
+ * https://gist.github.com/crearo/8c71729ed58c4c134cac44db74ea1754
+ * https://stackoverflow.com/questions/34213636/add-clockoverlay-in-pipeline-correct-use-of-capsfilter
+ * https://fossies.org/linux/gstreamer/tests/examples/controller/absolute-example.c
+ * https://github.com/on-three/video-text-relay

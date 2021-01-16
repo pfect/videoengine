@@ -14,31 +14,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  * 
- * Compile:
- * 
- * gcc videosend.c -o videosend `pkg-config --cflags --libs gstreamer-1.0`
- * 
- * gstreamer video streaming, based on gstreamer example
- * 
  * Copyright Pasi Patama, 2021 
- * 
- * References:
- * 
- * https://github.com/cuilf/gstreamer_example/blob/master/gst-caps-demo.c
- * https://gstreamer.freedesktop.org/documentation/application-development/advanced/pipeline-manipulation.html?gi-language=c
- * https://gist.github.com/beeender/d539734794606a38d4e3
- * https://github.com/crearo/gstreamer-cookbook/blob/master/C/dynamic-recording.c
- * https://gist.github.com/crearo/8c71729ed58c4c134cac44db74ea1754
- * https://stackoverflow.com/questions/34213636/add-clockoverlay-in-pipeline-correct-use-of-capsfilter
- * https://fossies.org/linux/gstreamer/tests/examples/controller/absolute-example.c
- * https://github.com/on-three/video-text-relay
  * 
  */
  
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <ctype.h>
 #include <gst/gst.h>
+#define MAXCHAR 1000
 
 static char *rand_string(char *str, size_t size)
 {
@@ -53,7 +40,7 @@ static char *rand_string(char *str, size_t size)
     }
     return str;
 }
-#define MAXCHAR 1000
+
 static char readvitals(char *str)
 {
 	char input[MAXCHAR];
@@ -63,20 +50,60 @@ static char readvitals(char *str)
 
 	if (fp == NULL)
 	{
-	  perror("Error while opening the oxymeter file.\n");
-	  exit(EXIT_FAILURE);
+	  sprintf(str, "");
+	} else {
+		while (fgets(input, MAXCHAR, fp) != NULL)
+			sprintf(str, "%s", input);
+		fclose(fp);
 	}
-
-	while (fgets(input, MAXCHAR, fp) != NULL)
-        sprintf(str, "%s", input);
-
-	fclose(fp);
 }
 
 int
 main (int argc, char *argv[])
 {
-	GstElement *pipeline, *testsource, *source, *sink, *filter,*videoconverter,*encoder,*mux,*payload, *textlabel_left,*textlabel_right, *timelabel, *clocklabel;
+	/* Take arguments */
+	int usetestsource=0;
+	char defaultvideodevice[]="/dev/video0";
+	char *videodevice=NULL;
+	
+	int c, index;
+	opterr = 0;
+	while ((c = getopt (argc, argv, "td:h")) != -1)
+	switch (c)
+	  {
+	  case 't':
+		usetestsource = 1;
+		break;
+	  case 'd':
+		videodevice = optarg;
+		break;
+	  case 'h':
+		fprintf(stderr,"Usage: -d [videodevice] \n       -t use test video source.\n");
+		return 1;
+		break;
+	  case '?':
+		if (optopt == 'd') {
+		  fprintf (stderr, "Option -%c requires video device name as an argument.\n", optopt);
+		  fprintf (stderr, "Example: videosend -d /dev/video0 \n");
+		}
+		else if (isprint (optopt))
+		  fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+		else
+		  fprintf (stderr,
+				   "Unknown option character `\\x%x'.\n",
+				   optopt);
+		return 1;
+	  default:
+		
+		break;
+	  }
+
+	/* Use default video device if none is provided by argument*/
+	if (videodevice == NULL)
+		videodevice = defaultvideodevice;
+  	
+	/* Initialize gstreamer */
+	GstElement *pipeline, *source, *sink, *filter,*videoconverter,*encoder,*mux,*payload, *textlabel_left,*textlabel_right, *timelabel, *clocklabel;
 	
 	GstCaps *filtercaps;
 	GstBus *bus;
@@ -86,14 +113,18 @@ main (int argc, char *argv[])
 	gst_init (&argc, &argv);
 
 	/* Selectable source (test vs camera) */
-	testsource = gst_element_factory_make ("videotestsrc", "source"); 
-	source = gst_element_factory_make ("v4l2src", "source");
+	if ( usetestsource == 1 )
+		source = gst_element_factory_make ("videotestsrc", "source"); 
+	if ( usetestsource == 0 ) {
+		source = gst_element_factory_make ("v4l2src", "source");
+		g_object_set (G_OBJECT ( source ), "device",videodevice, NULL); 
+	}
 	
 	GstElement *capsfilter = gst_element_factory_make("capsfilter", "camera_caps");
 	GstCaps *caps = gst_caps_from_string ("video/x-raw, width=640, height=480,framerate=15/1");
 	g_object_set (capsfilter, "caps", caps, NULL);
 	gst_caps_unref(caps);
-	g_object_set (G_OBJECT ( source ), "device", "/dev/video0", NULL);
+	
 
 	/* See: gstbasetextoverlay.h for positioning enums */
 	 
