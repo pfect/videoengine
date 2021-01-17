@@ -119,7 +119,7 @@ main (int argc, char *argv[])
 		lefttoptext = defaultlefttoptext;
   	
 	/* Initialize gstreamer */
-	GstElement *pipeline, *source, *sink, *filter,*videoconverter,*encoder,*mux,*payload, *textlabel_left,*textlabel_right, *timelabel, *clocklabel;
+	GstElement *pipeline, *logo, *source, *sink, *filter,*videoconverter,*encoder,*mux,*payload, *textlabel_left,*textlabel_right, *timelabel, *clocklabel;
 	
 	GstCaps *filtercaps;
 	GstBus *bus;
@@ -144,7 +144,14 @@ main (int argc, char *argv[])
 
 	/* See: gstbasetextoverlay.h for positioning enums */
 	
-	/* emboverlay logo="RidgeRun.png" logo-offsetv=250 logo-offseth=300 logo-transparency=0 logo-enable=true */
+	/* emboverlay logo="logo.png" logo-offsetv=250 logo-offseth=300 logo-transparency=0 logo-enable=true */
+	 
+	logo = gst_element_factory_make ("gdkpixbufoverlay", NULL);
+	g_object_set (G_OBJECT ( logo ), "location", "logo.png", NULL);
+	g_object_set (G_OBJECT ( logo ), "offset-x",320, NULL);
+	g_object_set (G_OBJECT ( logo ), "offset-y",380, NULL);
+	g_object_set (G_OBJECT ( logo ), "overlay-height",90, NULL);
+	g_object_set (G_OBJECT ( logo ), "overlay-width",90, NULL);
 	 
 	textlabel_left = gst_element_factory_make ("textoverlay", NULL);
 	g_object_set (G_OBJECT ( textlabel_left ), "text", lefttoptext, NULL);
@@ -222,9 +229,9 @@ main (int argc, char *argv[])
 	}
 
 	/* Build the pipeline */
-	gst_bin_add_many (GST_BIN (pipeline), source,capsfilter,textlabel_left,textlabel_right,timelabel,clocklabel,videoconverter, encoder,mux,payload, sink, NULL);
+	gst_bin_add_many (GST_BIN (pipeline), source,capsfilter,logo,textlabel_left,textlabel_right,timelabel,clocklabel,videoconverter, encoder,mux,payload, sink, NULL);
 
-	if ( gst_element_link_many (source,capsfilter,textlabel_left,textlabel_right,timelabel,clocklabel,videoconverter, encoder,mux,payload,sink,NULL) != TRUE) {
+	if ( gst_element_link_many (source,capsfilter,logo,textlabel_left,textlabel_right,timelabel,clocklabel,videoconverter, encoder,mux,payload,sink,NULL) != TRUE) {
 		g_printerr ("Elements could not be linked.\n");
 		gst_object_unref (pipeline);
 		return -1;
