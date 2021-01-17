@@ -68,11 +68,12 @@ main (int argc, char *argv[])
 	char defaultidentity[]="[no id]";
 	char *identity=NULL;
 	char defaultlefttoptext[]="[no classification]";
+	char *logofilename=NULL;
 	char *lefttoptext=NULL;
 	int c, index;
 	opterr = 0;
 	
-	while ((c = getopt (argc, argv, "td:hi:c:")) != -1)
+	while ((c = getopt (argc, argv, "td:hi:c:l:")) != -1)
 	switch (c)
 	  {
 	  case 't':
@@ -84,6 +85,7 @@ main (int argc, char *argv[])
 	  case 'h':
 		fprintf(stderr,"Usage: -d [videodevice] \n       -t use test video source.\n");
 		fprintf(stderr,"       -i [identity]\n");
+		fprintf(stderr,"       -l [logo image file]\n");
 		fprintf(stderr,"       -c [left top text]\n");
 		return 1;
 		break;
@@ -92,6 +94,9 @@ main (int argc, char *argv[])
 		break;
       case 'i':
 		identity = optarg;
+		break;
+	  case 'l':
+		logofilename = optarg;
 		break;
 	  case '?':
 		if (optopt == 'd') {
@@ -117,7 +122,7 @@ main (int argc, char *argv[])
 		identity = defaultidentity;
 	if (lefttoptext == NULL)
 		lefttoptext = defaultlefttoptext;
-  	
+	
 	/* Initialize gstreamer */
 	GstElement *pipeline, *logo, *source, *sink, *filter,*videoconverter,*encoder,*mux,*payload, *textlabel_left,*textlabel_right, *timelabel, *clocklabel;
 	
@@ -141,18 +146,22 @@ main (int argc, char *argv[])
 	g_object_set (capsfilter, "caps", caps, NULL);
 	gst_caps_unref(caps);
 	
+	/* Use logo if it was given -l [logo image file] otherwise use 
+	 * 'identity' dummy element just to pass data in pipe.
+	 * Example logo size: 150 x 150 
+	 */
+	if (logofilename == NULL)
+		logo = gst_element_factory_make ("identity", NULL);
+	else {
+		logo = gst_element_factory_make ("gdkpixbufoverlay", NULL);
+		g_object_set (G_OBJECT ( logo ), "location", logofilename, NULL);
+		g_object_set (G_OBJECT ( logo ), "offset-x",275, NULL);
+		g_object_set (G_OBJECT ( logo ), "offset-y",380, NULL);
+		g_object_set (G_OBJECT ( logo ), "overlay-height",90, NULL);
+		g_object_set (G_OBJECT ( logo ), "overlay-width",90, NULL);
+	}
 
 	/* See: gstbasetextoverlay.h for positioning enums */
-	
-	/* emboverlay logo="logo.png" logo-offsetv=250 logo-offseth=300 logo-transparency=0 logo-enable=true */
-	 
-	logo = gst_element_factory_make ("gdkpixbufoverlay", NULL);
-	g_object_set (G_OBJECT ( logo ), "location", "logo.png", NULL);
-	g_object_set (G_OBJECT ( logo ), "offset-x",320, NULL);
-	g_object_set (G_OBJECT ( logo ), "offset-y",380, NULL);
-	g_object_set (G_OBJECT ( logo ), "overlay-height",90, NULL);
-	g_object_set (G_OBJECT ( logo ), "overlay-width",90, NULL);
-	 
 	textlabel_left = gst_element_factory_make ("textoverlay", NULL);
 	g_object_set (G_OBJECT ( textlabel_left ), "text", lefttoptext, NULL);
 	g_object_set (G_OBJECT ( textlabel_left ), "valignment", 2, NULL);

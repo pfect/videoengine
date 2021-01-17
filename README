@@ -4,16 +4,18 @@ Small gstreamer program to get feed from camera, encode and send it
 to multiudpsink. Command line options to set overlayed text elements and
 /tmp/oxy file read to include external sensory payload for feed. 
 
-Usage
+Default logo png size: 150 x 150 px
+
+1. Usage
 
 #videosend -h
 Usage: -d [videodevice] 
        -t use test video source.
        -i [identity]
+       -l [logo image file]
        -c [left top text]
 
-
-Test receiver
+2. Test receiver
 
 You can use following gst-launch-1.0 script to receive feed.
 
@@ -25,7 +27,7 @@ gst-launch-1.0 -ve udpsrc port=5000 \
 ! videoconvert \
 ! ximagesink sync=false
 
-Oximeter data
+3. Oximeter data
 
 Modified cms50 project writes oximeter data (SpO2 and bpm) to /tmp/oxy
 file where videoengine reads text to display.
@@ -33,6 +35,8 @@ file where videoengine reads text to display.
 Note: original author git does not include these modifications.
 
 https://github.com/tobac/cms50ew
+
+4. Resources
 
 REF:
 
