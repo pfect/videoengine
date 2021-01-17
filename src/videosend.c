@@ -1,4 +1,7 @@
 /*
+ *  videosend - camera streaming utility 
+ *  Copyright (C) 2021  Pasi Patama
+ * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -14,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301, USA.
  * 
- * Copyright Pasi Patama, 2021 
- * 
+ * This work is based on gstreamer example applications and references
+ * indicated in README.
  */
  
 #include <stdio.h>
