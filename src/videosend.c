@@ -68,9 +68,8 @@ main (int argc, char *argv[])
 	int usetestsource=0;
 	char defaultvideodevice[]="/dev/video0";
 	char *videodevice=NULL;
-	char defaultidentity[]="[no id]";
+	char defaultidentity[]="";
 	char *identity=NULL;
-	char defaultlefttoptext[]="[no classification]";
 	char *logofilename=NULL;
 	char *lefttoptext=NULL;
 	int c, index;
@@ -123,8 +122,6 @@ main (int argc, char *argv[])
 		videodevice = defaultvideodevice;
 	if (identity == NULL)
 		identity = defaultidentity;
-	if (lefttoptext == NULL)
-		lefttoptext = defaultlefttoptext;
 	
 	/* Initialize gstreamer */
 	GstElement *pipeline, *logo, *source, *sink, *filter,*videoconverter,*encoder,*mux,*payload, *textlabel_left,*textlabel_right, *timelabel, *clocklabel;
@@ -165,19 +162,23 @@ main (int argc, char *argv[])
 	}
 
 	/* See: gstbasetextoverlay.h for positioning enums */
-	textlabel_left = gst_element_factory_make ("textoverlay", NULL);
-	g_object_set (G_OBJECT ( textlabel_left ), "text", lefttoptext, NULL);
-	g_object_set (G_OBJECT ( textlabel_left ), "valignment", 2, NULL);
-	g_object_set (G_OBJECT ( textlabel_left ), "halignment", 0, NULL);
-	g_object_set (G_OBJECT ( textlabel_left ), "shaded-background", TRUE, NULL);
-	g_object_set (G_OBJECT ( textlabel_left ), "font-desc", "Sans, 14", NULL);
+	if ( lefttoptext == NULL ) 
+		textlabel_left = gst_element_factory_make ("identity", NULL);
+	else {
+		textlabel_left = gst_element_factory_make ("textoverlay", NULL);
+		g_object_set (G_OBJECT ( textlabel_left ), "text", lefttoptext, NULL);
+		g_object_set (G_OBJECT ( textlabel_left ), "valignment", 2, NULL);
+		g_object_set (G_OBJECT ( textlabel_left ), "halignment", 0, NULL);
+		g_object_set (G_OBJECT ( textlabel_left ), "shaded-background", TRUE, NULL);
+		g_object_set (G_OBJECT ( textlabel_left ), "font-desc", "Sans, 14", NULL);
+	}
 	
 	textlabel_right = gst_element_factory_make ("textoverlay", NULL);
 	g_object_set (G_OBJECT ( textlabel_right ), "text", "", NULL);
 	g_object_set (G_OBJECT ( textlabel_right ), "valignment", 2, NULL);
 	g_object_set (G_OBJECT ( textlabel_right ), "halignment", 2, NULL);
 	g_object_set (G_OBJECT ( textlabel_right ), "shaded-background", TRUE, NULL);
-	g_object_set (G_OBJECT ( textlabel_right ), "font-desc", "Courier, 20", NULL);
+	g_object_set (G_OBJECT ( textlabel_right ), "font-desc", "Sans, 14", NULL);
 	 
 	timelabel = gst_element_factory_make ("timeoverlay", NULL);
 	g_object_set (G_OBJECT ( timelabel ), "text", "", NULL);
