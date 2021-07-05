@@ -3,4 +3,6 @@ src/videosend-videosend.o
 src/.deps/videosend-videosend.Po
 src/.deps
 autom4te.cache
+autom4te.cache/*
+config.log
 
