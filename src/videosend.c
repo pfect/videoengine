@@ -58,10 +58,17 @@ main (int argc, char *argv[])
 	char *identity=NULL;
 	char *logofilename=NULL;
 	char *lefttoptext=NULL;
+	char *dstip=NULL;
+	char *dstport=NULL;
+	char sinkstring[100];
+	char *capture_x=NULL;
+	char *capture_y=NULL;
+	char *capture_fps=NULL;
+	char capturestring[100];
 	int c, index;
 	opterr = 0;
 	
-	while ((c = getopt (argc, argv, "td:hi:c:l:")) != -1)
+	while ((c = getopt (argc, argv, "td:hi:c:l:a:p:x:y:f:")) != -1)
 	switch (c)
 	  {
 	  case 't':
@@ -75,8 +82,33 @@ main (int argc, char *argv[])
 		fprintf(stderr,"       -i [identity]\n");
 		fprintf(stderr,"       -l [logo image file]\n");
 		fprintf(stderr,"       -c [left top text]\n");
+		fprintf(stderr,"       -a [address]\n");
+		fprintf(stderr,"       -p [port]\n");
+		fprintf(stderr,"       -x [capture resolution x]\n");
+		fprintf(stderr,"       -y [capture resolution y]\n");
+		fprintf(stderr,"       -f [capture fps]\n");
+		fprintf(stderr,"\n");
+		fprintf(stderr,"       You can check camera supported formats with:\n");
+		fprintf(stderr,"       v4l2-ctl --list-formats-ext \n\n");
+		
+		
 		return 1;
 		break;
+	  case 'x':
+	    capture_x = optarg;
+	    break;
+	  case 'y':
+	    capture_y = optarg;
+	    break;
+	  case 'f':
+	    capture_fps = optarg;
+	    break;  
+	  case 'a':
+	    dstip = optarg;
+	    break;
+	  case 'p':
+	    dstport = optarg;
+	    break;
 	  case 'c':
 		lefttoptext = optarg;
 		break;
@@ -128,7 +160,18 @@ main (int argc, char *argv[])
 	}
 	
 	GstElement *capsfilter = gst_element_factory_make("capsfilter", "camera_caps");
-	GstCaps *caps = gst_caps_from_string ("video/x-raw, width=640, height=480,framerate=15/1");
+	
+	/* Set camera caps */
+	GstCaps *caps;
+	if ( capture_x != NULL && capture_y != NULL && capture_fps != NULL ) 
+	{
+		memset(capturestring,100,0);
+		sprintf(capturestring,"video/x-raw, width=%s, height=%s,framerate=%s/1",capture_x,capture_y,capture_fps);
+		caps = gst_caps_from_string (capturestring);
+	}
+	else {
+		caps = gst_caps_from_string ("video/x-raw, width=640, height=480,framerate=15/1");
+	}
 	g_object_set (capsfilter, "caps", caps, NULL);
 	gst_caps_unref(caps);
 	
@@ -210,8 +253,16 @@ main (int argc, char *argv[])
 	sink = gst_element_factory_make ("multiudpsink", NULL);
 	if (sink == NULL)
 		g_error ("Could not create multiudpsink");
-	g_object_set(G_OBJECT(sink), "clients", "0.0.0.0:5000,127.0.0.1:4999", NULL);
 	
+	/* Sink setup */
+	if ( dstip != NULL && dstport != NULL ) 
+	{
+		memset(sinkstring,100,0);
+		sprintf(sinkstring,"%s:%s,127.0.0.1:4999",dstip,dstport);
+		g_object_set(G_OBJECT(sink), "clients", sinkstring, NULL);
+	} else {
+		g_object_set(G_OBJECT(sink), "clients", "0.0.0.0:5000,127.0.0.1:4999", NULL);
+	}
 	pipeline = gst_pipeline_new ("test-pipeline");
 
 	if (!pipeline ) {
